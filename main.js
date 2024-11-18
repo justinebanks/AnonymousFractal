@@ -41,11 +41,16 @@ function randRange(min, max) {
 }
 
 
-function makeLine(x, y, length, angle, dir) {
-    return { x, y, length, angle, dir, hasChildren: false };
+function logBase(n, x) {
+    return Math.log(x) / Math.log(n);
 }
 
-function drawLine(x, y, length, angle, dir) {
+
+function makeLine(x, y, length, angle, dir, color=null) {
+    return { x, y, length, angle, dir, color, hasChildren: false };
+}
+
+function drawLine(x, y, length, angle, dir, color) {
     changeX = length * Math.sin(angle * (Math.PI/180));
     changeY = length * Math.cos(angle * (Math.PI/180));
 
@@ -61,6 +66,10 @@ function drawLine(x, y, length, angle, dir) {
         ctx.strokeStyle =  colorScheme[2];
     }
 
+    // if (color != "white") {
+    //     ctx.strokeStyle = color;
+    // }
+
     ctx.beginPath();
     ctx.moveTo(x, y);
     ctx.lineTo(endPoint.x, endPoint.y);
@@ -75,23 +84,26 @@ function runSimulation(scale, iterationCount, lengthCoefficient, angleIncrease) 
     let lines = []
     let newLines = []; // Waiting Room for Lines that will be put into "lines" at the end of the for loop
     
-    lines.push(makeLine(canvas.width/2, canvas.height/2, scale, 0, 1));
-    lines.push(makeLine(canvas.width/2, canvas.height/2, scale, 0, -1));
-    
+    lines.push(makeLine(canvas.width/2, canvas.height/2, scale, 0, 1, "hsl(200, 100%, 20%)"));
+    lines.push(makeLine(canvas.width/2, canvas.height/2, scale, 0, -1, "hsl(200, 100%, 20%)"));
     
     for (let i = 0; i < iterationCount; i++) {
-        for (let i = 0; i < lines.length; i++) {
-            let line = lines[i];
+        for (let i2 = 0; i2 < lines.length; i2++) {
+            let line = lines[i2];
     
             if (!line.hasChildren) {
-                
-                let endPoint = drawLine(line.x, line.y, line.length, line.angle, line.dir);
+                let endPoint = drawLine(line.x, line.y, line.length, line.angle, line.dir, line.color);
+
+                let lVal = Math.floor(20 + (-Math.pow(0.98, i+logBase(0.98, 80)) + 80));
+                let color = `hsl(200, 100%, ${lVal}%)`;
+
+        
     
-                newLines.push(makeLine(endPoint.x, endPoint.y, line.length*lengthCoefficient, line.angle+angleIncrease, line.dir));
-                newLines.push(makeLine(endPoint.x, endPoint.y, line.length*lengthCoefficient, line.angle-angleIncrease, line.dir));
+                newLines.push(makeLine(endPoint.x, endPoint.y, line.length*lengthCoefficient, line.angle+angleIncrease, line.dir, color));
+                newLines.push(makeLine(endPoint.x, endPoint.y, line.length*lengthCoefficient, line.angle-angleIncrease, line.dir, color));
             }
     
-            lines[i].hasChildren = true;
+            lines[i2].hasChildren = true;
         }
     
         for (let newLine of newLines) {
@@ -154,12 +166,11 @@ function animate() {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     runSimulation(scaleRange.value, iterationsRange.value, ratioRange.value, parseFloat(angleRange.value));
+
     angleText.innerText = parseFloat(angleRange.value).toPrecision(4);
     ratioText.innerText = parseFloat(ratioRange.value).toPrecision(5);
     scaleText.innerText = scaleRange.value;
     iterationsText.innerText = iterationsRange.value;
-
-
 }
 
 animate();
